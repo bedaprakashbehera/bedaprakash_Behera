@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [{ "src": "package.json", "use": "@vercel/next" }],
+  "env": {
+    "NEXTAUTH_URL": "https://YOUR_DOMAIN",
+    "NEXTAUTH_SECRET": "set-in-vercel",
+    "DATABASE_URL": "file:./prisma/prod.db"
+  }
+}

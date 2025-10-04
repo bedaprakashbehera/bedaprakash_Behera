@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  username         String    @unique
+  email            String    @unique
+  emailVerified    DateTime?
+  image            String?
+  bio              String?
+  hashedPassword   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  posts            Post[]
+  likes            Like[]
+  sentMessages     Message[] @relation("sentMessages")
+  receivedMessages Message[] @relation("receivedMessages")
+  followers        Follow[]  @relation("followers")
+  following        Follow[]  @relation("following")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes  Like[]
+}
+
+model Like {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  recipientId String
+  content     String
+  createdAt   DateTime @default(now())
+
+  sender    User @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("receivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, recipientId])
+}
